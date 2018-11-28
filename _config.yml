@@ -1,44 +1,66 @@
-# Welcome to Jekyll!
-#
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
+# ---------------- #
+#   Main Configs   #
+# ---------------- #
+baseurl:
+url: https://hao1993.github.io
+date_format: "ordinal"
 title: hao's blog
+subtitle: "记录成长，记录生活"
+description: "杨世浩的个人博客"
+keywords: hao, ShiHao Yang
+timezone: Asia/Beijing
+encoding: "utf-8"
+side_bar_repo_limit: 2
+
+# ---------------- #
+#      Author      #
+# ---------------- #
+author: ShiHao Yang
+github_username: hao1993
+location: BeiJing, China
 email: ysh69550@gmail.com
-description: "记录成长，记录生活"
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://hao1993.github.io" # the base hostname & protocol for your site, e.g. http://example.com
-#twitter_username: jekyllrb
-github_username:  hao1993
 
-# Build settings
+# ---------------- #
+#    Navigation    #
+# ---------------- #
+navs:
+  -
+    href: /
+    label: 首页
+  -
+    href: /about/
+    label: 关于
+
+# ---------------- #
+#       RSS        #
+# ---------------- #
+subscribe_rss: /feed.xml
+
+# ---------------- #
+#      Jekyll      #
+# ---------------- #
 markdown: kramdown
-theme: minima
-plugins:
-  - jekyll-feed
+kramdown:
+    input: GFM
+highlighter: rouge
+paginate: 10
+lsi: false
+quiet: false
+excerpt_separator: "\n\n"
+permalink: /:year/:month/:day/:title/
+gems:
+    - jekyll-github-metadata
+    - rouge
+#     - jekyll-html-pipeline
+    - jekyll-paginate
+    - jekyll-sitemap
+    - jekyll-feed
+    - jemoji
+#     - jekyll-mentions
+collections:
+    wiki:
+        output: true
+        permalink: /wiki/:path/
 
-# 评论系统
-# Disqus（https://disqus.com/）
-disqus_username: disqus_hao
+repository: hao1993/hao1993.github.io
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
