@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      熟悉Objective-C
+title:      《Effective Objective-C 2.0编写高质量iOS与OS X代码的52个有效方法》笔记
 date:       2018-11-28
 ---
 

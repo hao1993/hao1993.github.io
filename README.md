@@ -1,4 +1,4 @@
 My Github Pages
 
-[http://bingfeng.work](http://bingfeng.work/)
+[http://dddhao.com](http://dddhao.com/)
 
