@@ -64,3 +64,34 @@ collections:
 
 repository: hao1993/hao1993.github.io
 
+# ---------------- #
+#      Comments    #
+# ---------------- #
+# support provider: disqus, gitment, gitalk
+comments_provider: gitalk
+# !!!重要!!! 请修改下面这些信息为你自己申请的
+# !!!Important!!! Please modify infos below to yours
+
+# https://github.com/gitalk/gitalk#install
+gitalk:
+  enable: true    #是否开启Gitalk评论
+  clientID: df4ac47f176c07e699d2                            #生成的clientID
+  clientSecret: b888907664cbf586ba97eb5607438910a5db1f95    #生成的clientSecret
+  repo: hao1993.github.io    #仓库名称
+  owner: hao1993    #github用户名
+  admin: hao1993
+  distractionFreeMode: true #是否启用类似FB的阴影遮罩
+
+# ---------------- #
+#      Search      #
+# ---------------- #
+simple_jekyll_search:
+    # 是否支持全文搜索
+    fulltext: false
+    # 最多显示多少条搜索结果
+    limit: 10
+
+
+
+
+
