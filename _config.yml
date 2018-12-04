@@ -91,7 +91,10 @@ simple_jekyll_search:
     # 最多显示多少条搜索结果
     limit: 10
 
-
-
+# ---------------- #
+#    Analytics     #
+# ---------------- #
+# Baidu Analytics
+ba_track_id: 11d3aa996a63a709534916c078d5ba1a
 
 
