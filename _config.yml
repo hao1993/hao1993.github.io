@@ -74,13 +74,10 @@ comments_provider: gitalk
 
 # https://github.com/gitalk/gitalk#install
 gitalk:
-  enable: true    #是否开启Gitalk评论
-  clientID: df4ac47f176c07e699d2                            #生成的clientID
-  clientSecret: b888907664cbf586ba97eb5607438910a5db1f95    #生成的clientSecret
-  repo: hao1993.github.io    #仓库名称
-  owner: hao1993    #github用户名
-  admin: hao1993
-  distractionFreeMode: true #是否启用类似FB的阴影遮罩
+    owner: hao1993
+    repo: hao1993.github.io
+    clientID: df4ac47f176c07e699d2
+    clientSecret: b888907664cbf586ba97eb5607438910a5db1f95
 
 # ---------------- #
 #      Search      #
