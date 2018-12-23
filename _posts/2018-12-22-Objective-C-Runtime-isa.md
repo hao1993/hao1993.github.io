@@ -418,15 +418,15 @@ tall与hansome值是正常的，rich为-1，为什么呢？
 
 打断点可知，值设置成功了
 
-https://ws2.sinaimg.cn/large/006tNbRwly1fyh1dgg5m9j312u0fcta6.jpg
+![isa00](https://ws2.sinaimg.cn/large/006tNbRwly1fyh1dgg5m9j312u0fcta6.jpg)
 
 查看内存地址：
 
-https://ws3.sinaimg.cn/large/006tNbRwly1fyh1ep4gslj30zk07ajs3.jpg
+![isa01](https://ws3.sinaimg.cn/large/006tNbRwly1fyh1ep4gslj30zk07ajs3.jpg)
 
 查看计算器：
 
-https://ws1.sinaimg.cn/large/006tNbRwly1fyh1f4mz4tj30l209amzy.jpg
+![isa02](https://ws1.sinaimg.cn/large/006tNbRwly1fyh1f4mz4tj30l209amzy.jpg)
 
 刚刚是给rich赋值为1，即0b0000 0010
 
@@ -464,9 +464,9 @@ rich为-1的原因：
 
 运行：
 
-https://ws1.sinaimg.cn/large/006tNbRwly1fyh1fhwevtj312e0i8abu.jpg
+![isa03](https://ws1.sinaimg.cn/large/006tNbRwly1fyh1fhwevtj312e0i8abu.jpg)
 
-https://ws3.sinaimg.cn/large/006tNbRwly1fyh1fs9jvmj30la096juc.jpg
+![isa04](https://ws3.sinaimg.cn/large/006tNbRwly1fyh1fs9jvmj30la096juc.jpg)
 
 位域为何修改为两位就可以了呢？
 
