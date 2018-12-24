@@ -470,7 +470,7 @@ rich为-1的原因：
 
 位域为何修改为两位就可以了呢？
 
-```objective-c
+```objc
 - (BOOL)isRich {
     // _tallRichHandsome.rich只有一个二进制位  _tallRichHandsome.rich = 0b01 ，即0b0000 0001
     // 0会被当作符号为去覆盖，结果为0b0000 0001，为1
@@ -478,3 +478,118 @@ rich为-1的原因：
 }
 ```
 
+# 共用体
+
+**共用体**：在进行某些算法的C语言编程的时候，需要使几种不同类型的变量存放到同一段内存单元中。也就是使用覆盖技术，几个变量互相覆盖。这种几个不同的变量共同占用一段内存的结构，在C语言中，被称作“共用体”类型结构，简称共用体。
+
+苹果官方使用的是共用体：
+
+```objc
+#define TTallMask (1<<0)
+#define TRichMask (1<<1)
+#define THandsomeMask (1<<2)
+
+@interface MJPerson() {
+    union {
+        char bits;
+        struct {
+            char tall : 1;
+            char rich : 1;
+            char handsome : 1;
+        };
+    } _tallRichHandsome;
+}
+@end
+
+@implementation MJPerson
+
+- (void)setTall:(BOOL)tall {
+    if (tall) {
+        _tallRichHandsome.bits |= TTallMask;
+    } else {
+        _tallRichHandsome.bits &= ~TTallMask;
+    }
+}
+
+- (BOOL)isTall {
+    return !!(_tallRichHandsome.bits & TTallMask);
+}
+
+- (void)setRich:(BOOL)rich {
+    if (rich) {
+        _tallRichHandsome.bits |= TRichMask;
+    } else {
+        _tallRichHandsome.bits &= ~TRichMask;
+    }
+}
+
+- (BOOL)isRich {
+    return !!(_tallRichHandsome.bits & TRichMask);
+}
+
+- (void)setHandsome:(BOOL)handsome {
+    if (handsome) {
+        _tallRichHandsome.bits |= THandsomeMask;
+    } else {
+        _tallRichHandsome.bits &= ~THandsomeMask;
+    }
+}
+
+- (BOOL)isHandsome {
+    return !!(_tallRichHandsome.bits & THandsomeMask);
+}
+
+@end
+```
+
+运行程序验证结果可知，这样也是可以的。
+
+使用共用体的好处：
+
+- 运算的时候是直接通过位运算来做，这样就非常精准，不会出现不准确的情况；
+- 里边的结构体增加可读性；
+
+利用位域增加可读性，利用位运算存取值比较直接。
+
+# 总结
+
+回过头来看isa的结构：
+
+```objective-c
+union isa_t 
+{
+    Class cls;
+    uintptr_t bits;
+    struct {
+        uintptr_t nonpointer        : 1;
+        uintptr_t has_assoc         : 1;
+        uintptr_t has_cxx_dtor      : 1;
+        uintptr_t shiftcls          : 33; // MACH_VM_MAX_ADDRESS 0x1000000000
+        uintptr_t magic             : 6;
+        uintptr_t weakly_referenced : 1;
+        uintptr_t deallocating      : 1;
+        uintptr_t has_sidetable_rc  : 1;
+        uintptr_t extra_rc          : 19;
+    };
+};
+```
+
+`bits`用来存放所有的数据。
+
+- **nonpointer**：0，代表普通的指针，存储着Class、Meta-Class对象的内存地址
+  ​			 1，代表优化过，使用位域存储更多的信息
+
+- **has_assoc**：是否有设置过关联对象，如果没有，释放时会更快
+- **has_cxx_dtor**：是否有C++的析构函数（.cxx_destruct），如果没有，释放时会更快
+- **shiftcls**：存储着Class、Meta-Class对象的内存地址信息
+- **magic**：用于在调试时分辨对象是否未完成初始化
+- **weakly_referenced**：是否有被弱引用指向过，如果没有，释放时会更快
+- **deallocating**：对象是否正在释放
+- **has_sidetable_rc**：引用计数器是否过大无法存储在isa中，如果为1，那么引用计数会存储在一个叫SideTable的类的属性中
+- **extra_rc**：里面存储的值是引用计数器减1
+
+总结：
+
+- 在arm64之前，isa只是个指针，里边存储着类对象、元类对象的地址值；
+
+- arm64开始，isa经过了优化，它采取共用体的结构，将一个64位的内存数据分开来存储了很多东西，其中			   的33位是拿来存储类对象、元类对象的地址值。
