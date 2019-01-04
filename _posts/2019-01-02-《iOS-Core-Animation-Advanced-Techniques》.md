@@ -282,3 +282,22 @@ _layerView.layer.masksToBounds = YES;
 
 ### 阴影裁剪
 
+和图层边框不同，图层的阴影继承自内容的外形，而不是根据边界和角半径来确定。为了计算出阴影的形状，`Core Animation`会将寄宿图（包括子视图，如果有的话）考虑在内，然后通过这些来完美搭配图层形状从而创建一个阴影。
+
+### shadowPath属性
+
+我们已经知道图层阴影并不总是方的，而是从图层内容的形状继承而来。这看上去不错，但是实时计算阴影也是一个非常消耗资源的，尤其是图层有多个字图层，每个图层还有一个有透明效果的寄宿图的时候。
+
+如果你事先知道你的阴影形状会是什么样子的，你可以通过指定一个`shadowPath`来提高性能。`shadowPath`时候一个`CGPathRef`类型（一个指向`CGPath`的指针）。`CGPath`是一个`Core Graphics`对象，用来指定任意的一个矢量图形。我们可以通过这个属性单独于图层形状之外指定阴影的形状。
+
+```objective-c
+CGMutablePathRef squarePath = CGPathCreateMutable();
+CGPathAddEllipseInRect(squarePath, NULL, bgView.layer.bounds);
+bgView.layer.shadowPath = squarePath;
+CGPathRelease(squarePath);
+```
+
+如果是一个矩形或者是圆，用`CGPath`会相当简单明了。但是如果是更加复杂一点的图形，`UIBezierPath`类会更合适，它是一个由`UIKit`提供的在`CGPath`基础上的`Objective-C`包装类。
+
+## 图层蒙板
+
