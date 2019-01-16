@@ -155,3 +155,50 @@ void c_other(id self, SEL _cmd) {
 }
 ```
 
+# super
+
+```objective-c
+- (instancetype)init {
+    if (self = [super init]) {
+        NSLog(@"[self class] = %@", [self class]); // HStudent
+        NSLog(@"[self superclass] = %@", [self superclass]); // HPerson
+        
+        NSLog(@"[super class] = %@", [super class]); // HStudent
+        NSLog(@"[super superclass] = %@", [super superclass]); // HPerson
+    }
+    return self;
+}
+```
+
+`class`方法为`NSObject`的方法，最后都会走到`NSObject`中`class`的实现：即`[self class][super class]`最后调用的都为`NSObject`中的`class`
+
+```objective-c
+- (Clcass)class {
+	return object_getClass(self); // class 底层实现
+}
+```
+
+返回值取决于`self`，即方法调用者，即`receiver`
+
+```objective-c
+[self class]   // objc_msgSend(self, @selector(class))
+[super class]  // objc_msgSendSuper({self, [HPerson class]}, @selector(class))
+```
+
+`[super class]`的调用，`receiver`依旧为`self`，只不过会直接去父类的类对象里查找`class`方法
+
+**[super message]的底层实现**结论：
+
+1. 消息接收者仍然是子类对象
+2. 从父类开始查找方法的实现
+
+`superClass`底层实现为：
+
+```objective-c
+- (Class)superclass {
+    return calss_getSuperclass(object_getClass(self));
+}
+```
+
+![avatars](https://ws2.sinaimg.cn/large/006tNc79ly1fz84u8ixyrj30s00tawjx.jpg)
+
