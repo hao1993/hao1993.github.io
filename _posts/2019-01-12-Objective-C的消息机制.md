@@ -202,3 +202,43 @@ void c_other(id self, SEL _cmd) {
 
 ![avatars](https://ws2.sinaimg.cn/large/006tNc79ly1fz84u8ixyrj30s00tawjx.jpg)
 
+# 消息转发应用之一
+
+可以利用消息转发来降低崩溃率：
+
+```objective-c
+
+@interface HPerson : NSObject
+- (void)run;
+- (void)test;
+- (void)other;
+@end    
+    
+@implementlation HPerson
+- (void)run {
+	NSLog(@"run - 123");
+}    
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
+    // 本来能调用的方法
+    if ([self respondsToSelector:aSelector]) {
+        return [super methodSignatureForSelector:aSelector];
+    }
+    
+    // 找不到方法
+    return [NSMethodSignature signatureWithObjCTypes:"v@:"];
+}
+
+- (void)forwardInvocation:(NSInvocation *)anInvocation {
+    NSLog(@"找不到%@方法", NSStringFromSelector(anInvocation.selector));
+}
+
+@end
+    
+HPerson *person = [[HPerson alloc] init];
+[person run];
+[person test];
+[person other];
+```
+
+打印结果为：run - 123 ，找不到test方法，找不到other方法
