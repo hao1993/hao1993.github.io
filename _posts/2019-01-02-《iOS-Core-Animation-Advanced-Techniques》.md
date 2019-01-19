@@ -301,3 +301,220 @@ CGPathRelease(squarePath);
 
 ## 图层蒙板
 
+`CALayer`有一个属性叫做`mask`，这个属性本身就是个`CLayer`类型，有和其他图层一样的绘制和布局属性。它类似于一个字图层，相对于父图层（即拥有该属性的图层）布局，但是它却不是一个普通的子图层。不同于那些绘制在父图层中的子图层，**`mask`图层定义了父图层的部分可见区域。**
+
+```objc
+CALayer *maskLayer = [CALayer layer];
+maskLayer.frame = self.imageView.bounds;
+    
+UIImage *maskImage = [UIImage imageNamed:@"Cone"];
+maskLayer.contents = (__bridge id)maskImage.CGImage;
+    
+self.imageView.layer.mask = maskLayer;
+    
+self.imageView.backgroundColor = [UIColor redColor];
+```
+
+`CALayer`蒙板图层真正厉害的地方在于蒙板图不局限于静态图。任何有图层构成的都可以作为`mask`属性，这意味着你的蒙板可以通过代码甚至是动画实时生成。
+
+## 拉伸过滤
+
+`minificationFilter`和`magnificationFilter`默认的过滤器都是`kCAFilterLinear`，这个过滤器采用双线滤波算法，它在大多数情况下都表现良好。双线形滤波算法通过对多个像素取样最终生成新的值，得到一个平滑的表现不错的拉伸。但是当放大倍数比较大的时候图片就模糊不清了。
+
+``kCAFilterTrilinear`和`kCAFilterLinear`非常相似，大部分情况下二者都看不出来有什么差别。但是，较双线性滤波算法而言，三线性滤波算法存储了多个大小情况下的图片（也叫多重贴图），并三维取样，同时结合大图和小图的存储进而得到最后的结果。
+
+  `kCAFilterNearest`是一种比较武断的方法。从名字不难看出，这个算法（也叫最近过滤）就是取样最近的单像素点而不管其他的颜色。这样做非常快，也不会使图片模糊。但是，最明显的效果就是，会使得压缩图片更糟，图片放大之后也显得块状或是马赛克严重。
+
+```objective-c
+view.layer.magnificationFilter = kCAFilterNearest;
+```
+
+## 组透明
+
+为了启用`shouldRasterize`属性，我们设置了图层的`rasterizationScale`属性。默认情况下，所有图层拉伸都是1.0， 所以如果你使用了`shouldRasterize`属性，你就要确保你设置了`rasterizationScale`属性去匹配屏幕，以防止出现Retina屏幕像素化的问题。
+
+```objective-c
+button2.layer.shouldRasterize = YES;
+button2.layer.rasterizationScale = [UIScreen mainScreen].scale;
+```
+
+**iOS11测试未发现异常**
+
+## 总结
+
+这一章介绍了一些可以通过代码应用到图层上的视觉效果，比如圆角，阴影和蒙板。我们也了解了拉伸过滤器和组透明。
+
+在第五章，**变换**中，我们将会研究图层变化和3D转换。
+
+# 变换
+
+## 仿射变换
+
+`UIView`可以通过设置`transform`属性做变换，但实际上它只是封装了内部图层的变换。
+
+`CALayer`同样也有一个`transform`属性，但它的类型是`CATransform3D`，而不是`CGAffineTransform`，本章后续将会详细解释。`CALayer`对应于`UIView`的`transform`属性叫做`affineTransform`，清单5.1的例子就是使用`affineTransform`对图层做了45度顺时针旋转。
+
+```objective-c
+CGAffineTransform transform = CGAffineTransformMakeRotation(M_PI_4);
+self.layerView.layer.affineTransform = transform;
+```
+
+C的数学函数库（iOS会自动引入）提供了pi的一些简便的换算，`M_PI_4`于是就是pi的四分之一。
+
+我们来用这些函数组合一个更加复杂的变换，先缩小50%，再旋转30度，最后向右移动200个像素（清单5.2）。图5.4显示了图层变换最后的结果。
+
+```objective-c
+//create a new transform
+CGAffineTransform transform = CGAffineTransformIdentity; 
+//scale by 50%
+transform = CGAffineTransformScale(transform, 0.5, 0.5);
+//rotate by 30 degrees
+transform = CGAffineTransformRotate(transform, M_PI / 180.0 * 30.0);
+//translate by 200 points
+transform = CGAffineTransformTranslate(transform, 200, 0);
+//apply transform to layer
+self.layerView.layer.affineTransform = transform;
+```
+
+## 3D变换
+
+### 透视投影
+
+`CATransform3D`的透视效果通过一个矩阵中一个很简单的元素来控制：`m34`。`m34`（图5.9）用于按比例缩放X和Y的值来计算到底要离视角多远。
+
+`m34`的默认值是0，我们可以通过设置`m34`为-1.0 / `d`来应用透视效果，`d`代表了想象中视角相机和屏幕之间的距离，以像素为单位，那应该如何计算这个距离呢？实际上并不需要，大概估算一个就好了。
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    //create a new transform
+    CATransform3D transform = CATransform3DIdentity;
+    //apply perspective
+    transform.m34 = - 1.0 / 500.0;
+    //rotate by 45 degrees along the Y axis
+    transform = CATransform3DRotate(transform, M_PI_4, 0, 1, 0);
+    //apply to layer
+    self.layerView.layer.transform = transform;
+}
+```
+
+### 灭点
+
+如果有多个视图或者图层，每个都做3D变换，那就需要分别设置相同的m34值，并且确保在变换之前都在屏幕中央共享同一个`position`，如果用一个函数封装这些操作的确会更加方便，但仍然有限制（例如，你不能在Interface Builder中摆放视图），这里有一个更好的方法。
+
+`CALayer`有一个属性叫做`sublayerTransform`。它也是`CATransform3D`类型，但和对一个图层的变换不同，它影响到所有的子图层。这意味着你可以一次性对包含这些图层的容器做变换，于是所有的子图层都自动继承了这个变换方法。
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    //apply perspective transform to container
+    CATransform3D perspective = CATransform3DIdentity;
+    perspective.m34 = - 1.0 / 500.0;
+    self.containerView.layer.sublayerTransform = perspective;
+    //rotate layerView1 by 45 degrees along the Y axis
+    CATransform3D transform1 = CATransform3DMakeRotation(M_PI_4, 0, 1, 0);
+    self.layerView1.layer.transform = transform1;
+    //rotate layerView2 by 45 degrees along the Y axis
+    CATransform3D transform2 = CATransform3DMakeRotation(-M_PI_4, 0, 1, 0);
+    self.layerView2.layer.transform = transform2;
+}
+```
+
+## 固体对象
+
+暂无可记录内容
+
+## 总结
+
+这一章涉及了一些2D和3D的变换。你学习了一些矩阵计算的基础，以及如何用Core Animation创建3D场景。你看到了图层背后到底是如何呈现的，并且知道了不能把扁平的图片做成真实的立体效果，最后我们用demo说明了触摸事件的处理，视图中图层添加的层级顺序会比屏幕上显示的顺序更有意义。
+
+第六章我们会研究一些Core Animation提供不同功能的具体的`CALayer`子类。
+
+# 专用图层
+
+到目前为止，我们已经探讨过`CALayer`类了，同时我们也了解到了一些非常有用的绘图和动画功能。但是Core Animation图层不仅仅能作用于图片和颜色而已。本章就会学习其他的一些图层类，进一步扩展使用Core Animation绘图的能力。
+
+## CAShapeLayer
+
+`CAShapeLayer`是一个通过矢量图形而不是bitmap来绘制的图层子类。你指定诸如颜色和线宽等属性，用`CGPath`来定义想要绘制的图形，最后`CAShapeLayer`就自动渲染出来了。当然，你也可以用Core Graphics直接向原始的`CALyer`的内容中绘制一个路径，相比直下，使用`CAShapeLayer`有以下一些优点：
+
+- 渲染快速。`CAShapeLayer`使用了硬件加速，绘制同一图形会比用Core Graphics快很多。
+- 高效使用内存。一个`CAShapeLayer`不需要像普通`CALayer`一样创建一个寄宿图形，所以无论有多大，都不会占用太多的内存。
+- 不会被图层边界剪裁掉。一个`CAShapeLayer`可以在边界之外绘制。你的图层路径不会像在使用Core Graphics的普通`CALayer`一样被剪裁掉（如我们在第二章所见）。
+- 不会出现像素化。当你给`CAShapeLayer`做3D变换时，它不像一个有寄宿图的普通图层一样变得像素化。
+
+### 创建一个`CGPath`
+
+`CAShapeLayer`可以用来绘制所有能够通过`CGPath`来表示的形状。这个形状不一定要闭合，图层路径也不一定要不可破，事实上你可以在一个图层上绘制好几个不同的形状。你可以控制一些属性比如`lineWidth`（线宽，用点表示单位），`lineCap`（线条结尾的样子），和`lineJoin`（线条之间的结合点的样子）；但是在图层层面你只有一次机会设置这些属性。如果你想用不同颜色或风格来绘制多个形状，就不得不为每个形状准备一个图层了。
+
+```objective-c
+//create path
+    UIBezierPath *path = [[UIBezierPath alloc] init];
+    [path moveToPoint:CGPointMake(175, 100)];
+    [path addArcWithCenter:CGPointMake(150, 100) radius:25 startAngle:0 endAngle:2*M_PI clockwise:YES];
+    [path moveToPoint:CGPointMake(150, 125)];
+    [path addLineToPoint:CGPointMake(150, 175)];
+    [path addLineToPoint:CGPointMake(125, 225)];
+    [path moveToPoint:CGPointMake(150, 175)];
+    [path addLineToPoint:CGPointMake(175, 225)];
+    [path moveToPoint:CGPointMake(100, 150)];
+    [path addLineToPoint:CGPointMake(200, 150)];
+    
+    //create shape layer
+    CAShapeLayer *shapeLayer = [CAShapeLayer layer];
+    shapeLayer.strokeColor = [UIColor redColor].CGColor;
+    shapeLayer.fillColor = [UIColor clearColor].CGColor;
+    shapeLayer.lineWidth = 5;
+    shapeLayer.lineJoin = kCALineJoinRound;
+    shapeLayer.lineCap = kCALineCapRound;
+    shapeLayer.path = path.CGPath;
+    
+    //add it to our view
+    [self.containerView.layer addSublayer:shapeLayer];
+```
+
+### 圆角
+
+虽然使用`CAShapeLayer`类需要更多的工作，但是它有一个优势就是可以单独指定每个角。
+
+我们创建圆角矩形其实就是人工绘制单独的直线和弧度，但是事实上`UIBezierPath`有自动绘制圆角矩形的构造方法，下面这段代码绘制了一个有三个圆角一个直角的矩形：
+
+```objective-c
+	CGRect rect = CGRectMake(50, 50, 100, 100);
+    CGSize radii = CGSizeMake(20, 20);
+    UIRectCorner corners = UIRectCornerTopRight | UIRectCornerBottomRight | UIRectCornerBottomLeft;
+    UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:rect byRoundingCorners:corners cornerRadii:radii];
+    
+    CAShapeLayer *shapeLayer = [CAShapeLayer layer];
+    shapeLayer.strokeColor = [UIColor redColor].CGColor;
+    shapeLayer.fillColor = [UIColor clearColor].CGColor;
+    shapeLayer.lineWidth = 5;
+    shapeLayer.lineJoin = kCALineJoinRound;
+    shapeLayer.lineCap = kCALineCapRound;
+    shapeLayer.path = bezierPath.CGPath;
+    
+    [self.containerView.layer addSublayer:shapeLayer];
+```
+
+## CATextLayer
+
+Core Animation提供了一个`CALayer`的子类`CATextLayer`，它以图层的形式包含了`UILabel`几乎所有的绘制特性，并且额外提供了一些新的特性。`CATextLayer`使用了Core text，并且渲染得非常快。
+
+我们应该继承`UILabel`，然后添加一个子图层`CATextLayer`并重写显示文本的方法。但是仍然会有由`UILabel`的`-drawRect:`方法创建的空寄宿图。而且由于`CALayer`不支持自动缩放和自动布局，子视图并不是主动跟踪视图边界的大小，所以每次视图大小被更改，我们不得不手动更新子图层的边界。
+
+## CATransformLayer
+
+暂无
+
+## CAGradientLayer
+
+`CAGradientLayer`是用来生成两种或更多颜色平滑渐变的。
+
+## CAReplicatorLayer
+
+`CAReplicatorLayer`的目的是为了高效生成许多相似的图层。它会绘制一个或多个图层的子图层，并在每个复制体上应用不同的变换。
+
+## CAScrollLayer
+
